@@ -7,40 +7,35 @@ use datafusion::execution::SessionStateBuilder;
 use datafusion::prelude::{SessionConfig, SessionContext};
 use tempfile::tempdir;
 use tokio::fs::OpenOptions;
-use vortex_array::arrays::{BooleanBuffer, ChunkedArray, StructArray, VarBinArray};
+use vortex_array::arrays::{ListArray, StructArray};
 use vortex_array::stream::ArrayStreamArrayExt;
 use vortex_array::validity::Validity;
-use vortex_array::{Array, IntoArray};
+use vortex_array::IntoArray;
 use vortex_buffer::buffer;
 use vortex_datafusion::persistent::VortexFormat;
+use vortex_dtype::DType::Utf8;
+use vortex_dtype::Nullability;
 use vortex_error::vortex_err;
 use vortex_file::VortexWriteOptions;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let temp_dir = tempdir()?;
-    let key = ChunkedArray::from_iter([
-        buffer![0u64, 1, 2, 3].into_array(),
-        buffer![4u64, 5, 6, 7].into_array(),
-    ])
-    .into_array();
+    let key = buffer![0u64, 1, 2, 3].into_array();
 
-    let token = ChunkedArray::from_iter([
-        VarBinArray::from(vec!["ab", "foo", "bar", "foo"]).into_array(),
-        VarBinArray::from(vec!["biz", "boz", "boop", "blep"]).into_array(),
-    ])
-    .into_array();
+    // NB: u16 here is the max length of each token list.
+    let tokens = ListArray::from_iter_slow::<u16, _>(
+            vec![vec!["foo", "bar"], vec![], vec!["baz", "bar"], vec!["foo"]],
+            Arc::new(Utf8(Nullability::NonNullable).into()),
+        )
+        .unwrap();
 
-    let bit = ChunkedArray::from_iter([
-        BooleanBuffer::from(vec![true, false, true, true]).into_array(),
-        BooleanBuffer::from(vec![true, false, true, false]).into_array(),
-    ])
-    .into_array();
+    println!(">>> {tokens:#?}");
 
     let st = StructArray::try_new(
-        ["key".into(), "token".into(), "bit".into()].into(),
-        vec![key, token, bit],
-        8,
+        ["key".into(), "tokens".into()].into(),
+        vec![key, tokens],
+        4,
         Validity::NonNullable,
     )?;
 
@@ -75,9 +70,15 @@ async fn main() -> anyhow::Result<()> {
 
     let listing_table = Arc::new(ListingTable::try_new(config)?);
 
+    ctx.register_udf(datafusion::functions_array::make_array::MakeArray::new().into());
+
     ctx.register_table("vortex_tbl", listing_table)?;
 
-    run_query(&ctx, "SELECT * FROM vortex_tbl WHERE bit = true AND token = 'foo'").await?;
+    run_query(
+        &ctx,
+        "SELECT key FROM vortex_tbl WHERE tokens @> make_array('foo')",
+    )
+    .await?;
 
     Ok(())
 }

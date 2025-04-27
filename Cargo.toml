@@ -8,8 +8,9 @@ anyhow = "1.0.98"
 datafusion = "46.0.0"
 tempfile = "3.19.1"
 tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }
-vortex-array = { path = "../vortex/vortex-array" }
+vortex-array = { path = "../vortex/vortex-array", features = ["test-harness"] }
 vortex-buffer = { path = "../vortex/vortex-buffer" }
 vortex-datafusion = { path = "../vortex/vortex-datafusion" }
+vortex-dtype = { path = "../vortex/vortex-dtype" }
 vortex-error = { path = "../vortex/vortex-error" }
 vortex-file = { path = "../vortex/vortex-file" }
