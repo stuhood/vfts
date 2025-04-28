@@ -9,3 +9,5 @@ vortex-array = { path = "../vortex/vortex-array", features = ["test-harness"] }
 vortex-btrblocks = { path = "../vortex/vortex-btrblocks" }
 vortex-buffer = { path = "../vortex/vortex-buffer" }
 vortex-dtype = { path = "../vortex/vortex-dtype" }
+vortex-error = { path = "../vortex/vortex-error" }
+vortex-mask = { path = "../vortex/vortex-mask" }
