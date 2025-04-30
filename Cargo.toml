@@ -5,9 +5,9 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.98"
-vortex-array = { path = "../vortex/vortex-array", features = ["test-harness"] }
-vortex-btrblocks = { path = "../vortex/vortex-btrblocks" }
-vortex-buffer = { path = "../vortex/vortex-buffer" }
-vortex-dtype = { path = "../vortex/vortex-dtype" }
-vortex-error = { path = "../vortex/vortex-error" }
-vortex-mask = { path = "../vortex/vortex-mask" }
+vortex-array = { version = "0.32.0", features = ["test-harness"] }
+vortex-btrblocks = "0.32.0"
+vortex-buffer =  "0.32.0"
+vortex-dtype = "0.32.0"
+vortex-error = "0.32.0"
+vortex-mask = "0.32.0"
