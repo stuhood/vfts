@@ -1,22 +1,29 @@
+use std::collections::HashSet;
+use std::path::PathBuf;
 use std::sync::Arc;
 
-use vortex_array::arrays::{BooleanBufferBuilder, ConstantArray, ListArray};
+use tempfile::TempDir;
+use tokio::fs::OpenOptions;
+
+use vortex_array::arrays::{BooleanBufferBuilder, ConstantArray, ListArray, StructArray};
 use vortex_array::compute;
+use vortex_array::stream::ArrayStreamArrayExt;
 use vortex_array::{Array, ArrayRef, IntoArray, ToCanonical};
 use vortex_btrblocks::BtrBlocksCompressor;
 use vortex_buffer::buffer;
-use vortex_dtype::DType::Utf8;
-use vortex_dtype::Nullability;
+use vortex_dtype::{DType, Nullability};
 use vortex_error::{VortexResult, vortex_bail};
+use vortex_file::VortexWriteOptions;
 use vortex_mask::Mask;
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let key = buffer![3u64, 1, 5, 7].into_array();
 
     // NB: u16 here is the max length of each token list.
     let tokens = ListArray::from_iter_slow::<u16, _>(
         vec![vec!["foo", "bar"], vec![], vec!["baz", "bar"], vec!["foo"]],
-        Arc::new(Utf8(Nullability::NonNullable).into()),
+        Arc::new(DType::Utf8(Nullability::NonNullable).into()),
     )
     .unwrap();
 
@@ -72,4 +79,60 @@ fn key_having_token(key: &dyn Array, tokens: &dyn Array, token: &str) -> VortexR
     let matching_keys = compute::filter(key, &Mask::from_buffer(key_mask.into()))?;
 
     Ok(matching_keys)
+}
+
+///
+/// Given a non-unique set of sample tokens from a dataset, select `pivot_count` pivot values which
+/// will roughly equally divide the sample.
+///
+fn select_pivots_from(mut sample_tokens: Vec<String>, pivot_count: u16) -> Vec<String> {
+    assert!(!sample_tokens.is_empty());
+    sample_tokens.sort_unstable();
+
+    let bucket_width = sample_tokens.len() as f64 / pivot_count as f64;
+    (0..pivot_count)
+        .map(|idx| sample_tokens[(idx as f64 * bucket_width).floor() as usize].clone())
+        .collect()
+}
+
+fn tokenize(document: &str) -> HashSet<String> {
+    document
+        .split_whitespace()
+        .map(|word| word.trim_matches(|c: char| !c.is_alphanumeric()))
+        .filter(|word| !word.is_empty())
+        .map(|word| word.to_lowercase())
+        .collect()
+}
+
+fn documents() -> impl Iterator<Item = &'static str> {
+    include_str!("./all_the_henries.txt").lines()
+}
+
+type Document = (usize, HashSet<String>);
+
+async fn vortex_index(
+    temp_dir: TempDir,
+    document_sample: impl Iterator<Item = Document>,
+    documents: impl Iterator<Item = Document>,
+) -> anyhow::Result<PathBuf> {
+    let st = StructArray::try_new(todo!(), todo!(), todo!(), todo!())?;
+
+    vortex_index_array(temp_dir, st.into_array()).await
+}
+
+async fn vortex_index_array(temp_dir: TempDir, array: ArrayRef) -> anyhow::Result<PathBuf> {
+    let filepath = temp_dir.path().join("a.vortex");
+
+    let f = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .create(true)
+        .open(&filepath)
+        .await?;
+
+    VortexWriteOptions::default()
+        .write(f, array.to_array_stream())
+        .await?;
+
+    Ok(filepath)
 }
