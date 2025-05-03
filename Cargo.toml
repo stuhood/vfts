@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.98"
 clap = { version = "4.5.37", features = ["derive"] }
+tantivy = "0.24.1"
 tokio = { version = "1.44.2", features = ["rt-multi-thread", "macros", "fs"] }
 vortex-array = { version = "0.32.0", features = ["test-harness"] }
 vortex-btrblocks = "0.32.0"
