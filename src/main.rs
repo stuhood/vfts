@@ -29,6 +29,7 @@ enum Index {
 #[derive(Debug, Subcommand)]
 enum Search {
     Tantivy { path: PathBuf, query: String },
+    Vortex { path: PathBuf, query: String },
 }
 
 #[tokio::main]
@@ -42,6 +43,9 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::Search(Search::Tantivy { path, query }) => {
             crate::tantivy::tantivy_search(&path, &query)?
+        }
+        Command::Search(Search::Vortex { path, query }) => {
+            crate::vortex::vortex_search(&path, &query).await?
         }
     }
 

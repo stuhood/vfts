@@ -1,6 +1,9 @@
 use std::path::Path;
+use std::pin::pin;
 use std::sync::Arc;
 
+use anyhow::anyhow;
+use futures_util::stream::StreamExt;
 use tokio::fs::OpenOptions;
 
 use vortex_array::arrays::{BooleanBufferBuilder, ConstantArray, StructArray};
@@ -11,8 +14,11 @@ use vortex_array::validity::Validity;
 use vortex_array::{Array, ArrayRef, ToCanonical};
 use vortex_dtype::{DType, Nullability, PType};
 use vortex_error::{VortexResult, vortex_bail};
-use vortex_file::VortexWriteOptions;
+use vortex_file::{VortexOpenOptions, VortexWriteOptions};
+use vortex_io::TokioFile;
 use vortex_mask::Mask;
+
+const ID_COLUMN: &str = "::id::";
 
 ///
 /// Given a list of (primary) keys and a ListArray<Utf8> of tokens, returns the keys which contain
@@ -90,18 +96,19 @@ fn select_buckets_from(
     buckets
 }
 
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Ord, PartialOrd, Eq, PartialEq)]
+#[repr(u8)]
 enum BucketType {
-    Single,
-    Multi,
+    // NB: `Single` must sort first, since we always attempt our binary searches with an exact
+    // match.
+    Single = 0,
+    Multi = 1,
 }
 
 impl BucketType {
     fn column_name(&self, mut token: String) -> String {
-        match self {
-            BucketType::Single => token.push_str(":s"),
-            BucketType::Multi => token.push_str(":m"),
-        }
+        token.push(':');
+        token.push_str(&((*self) as u8).to_string());
         token
     }
 }
@@ -169,7 +176,7 @@ pub async fn vortex_index(path: &Path, buckets: u16) -> anyhow::Result<()> {
         doc_count += 1;
     }
 
-    let field_names: Arc<[Arc<str>]> = std::iter::once("::id::".into())
+    let field_names: Arc<[Arc<str>]> = std::iter::once(ID_COLUMN.into())
         .chain(
             buckets
                 .into_iter()
@@ -198,6 +205,61 @@ async fn vortex_index_array(path: &Path, array: ArrayRef) -> anyhow::Result<()> 
     VortexWriteOptions::default()
         .write(f, array.to_array_stream())
         .await?;
+
+    Ok(())
+}
+
+pub async fn vortex_search(path: &Path, query: &str) -> anyhow::Result<()> {
+    let file = VortexOpenOptions::file()
+        .open_read_at(TokioFile::open(path)?)
+        .await?;
+
+    let dtype = file
+        .dtype()
+        .as_struct()
+        .ok_or_else(|| anyhow!("Does not appear to be an index!"))?;
+
+    // Binary search on field names to find the bins that we'll be scanning in.
+    let filter = crate::common::tokenize(query)
+        .into_iter()
+        .map(|token| {
+            let needle: Arc<str> = BucketType::Single.column_name(token).into();
+            let result = dtype
+                .names()
+                .binary_search(&needle);
+            let (idx, btype) = match result {
+                Ok(idx) => {
+                    (idx, BucketType::Single)
+                },
+                Err(idx) if idx < 1 => {
+                    // NB: Our ID_COLUMN is the first field, so an insertion position of `1`
+                    // matches our first bucket.
+                    (1, BucketType::Multi)
+                }
+                Err(idx) => (idx - 1, BucketType::Multi),
+            };
+
+            let get_item = vortex_expr::get_item(dtype.names()[idx].clone(), vortex_expr::ident());
+            match btype {
+                BucketType::Single => get_item,
+                BucketType::Multi => todo!("Implement support for searching `multi` buckets."),
+            }
+        })
+        .reduce(vortex_expr::and)
+        .ok_or_else(|| anyhow!("No tokens provided!"))?;
+
+    let mut results = pin!(
+        file.scan()?
+            .with_filter(filter)
+            .with_projection(vortex_expr::get_item(ID_COLUMN, vortex_expr::ident()))
+            .into_stream()?
+    );
+
+    while let Some(row) = results.next().await {
+        for id in row?.to_primitive()?.as_slice::<u64>() {
+            println!(">>> {id:?}");
+        }
+    }
 
     Ok(())
 }
