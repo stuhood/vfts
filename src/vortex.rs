@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::sync::Arc;
 
 use tokio::fs::OpenOptions;
 
@@ -8,7 +9,7 @@ use vortex_array::compute;
 use vortex_array::stream::ArrayStreamArrayExt;
 use vortex_array::validity::Validity;
 use vortex_array::{Array, ArrayRef, ToCanonical};
-use vortex_dtype::{DType, Nullability};
+use vortex_dtype::{DType, Nullability, PType};
 use vortex_error::{VortexResult, vortex_bail};
 use vortex_file::VortexWriteOptions;
 use vortex_mask::Mask;
@@ -109,18 +110,22 @@ pub async fn vortex_index(path: &Path, buckets: u16) -> anyhow::Result<()> {
     let buckets = select_buckets_from(
         crate::common::documents()
             .take(1000)
-            .map(|doc| doc.into_iter())
+            .map(|(_, doc)| doc.into_iter())
             .flatten()
             .collect(),
         buckets,
     );
     let bucket_count = buckets.len();
 
+    let mut id_builder = builder_with_capacity(
+        &DType::Primitive(PType::U64, Nullability::NonNullable).into(),
+        1024,
+    );
     let mut builders = buckets
         .iter()
         .map(|(_, btype)| match btype {
             BucketType::Single => {
-                builder_with_capacity(&DType::Bool(Nullability::NonNullable).into(), 128)
+                builder_with_capacity(&DType::Bool(Nullability::NonNullable).into(), 1024)
             }
             BucketType::Multi => builder_with_capacity(
                 &DType::List(
@@ -128,13 +133,14 @@ pub async fn vortex_index(path: &Path, buckets: u16) -> anyhow::Result<()> {
                     Nullability::NonNullable,
                 )
                 .into(),
-                128,
+                1024,
             ),
         })
         .collect::<Vec<_>>();
     let mut entries_to_append: Vec<Vec<String>> = buckets.iter().map(|_| Vec::new()).collect();
     let mut doc_count = 0;
-    for document in crate::common::documents() {
+    for (id, document) in crate::common::documents() {
+        id_builder.append_scalar(&id.into())?;
         // Group the tokens by the bucket that they will be appended to.
         for token in document {
             let idx = match buckets
@@ -163,15 +169,18 @@ pub async fn vortex_index(path: &Path, buckets: u16) -> anyhow::Result<()> {
         doc_count += 1;
     }
 
-    let st = StructArray::try_new(
-        buckets
-            .into_iter()
-            .map(|(t, btype)| btype.column_name(t).into())
-            .collect(),
-        builders.into_iter().map(|mut b| b.finish()).collect(),
-        doc_count,
-        Validity::NonNullable,
-    )?;
+    let field_names: Arc<[Arc<str>]> = std::iter::once("::id::".into())
+        .chain(
+            buckets
+                .into_iter()
+                .map(|(t, btype)| btype.column_name(t).into()),
+        )
+        .collect();
+    let fields = std::iter::once(id_builder.finish())
+        .chain(builders.into_iter().map(|mut b| b.finish()))
+        .collect();
+
+    let st = StructArray::try_new(field_names, fields, doc_count, Validity::NonNullable)?;
 
     vortex_index_array(path, st.into_array()).await?;
     println!(">>> created {path:?}, with {doc_count} documents in {bucket_count} buckets");
