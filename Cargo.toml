@@ -9,12 +9,17 @@ clap = { version = "4.5.37", features = ["derive"] }
 futures-util = "0.3.31"
 tantivy = "0.24.1"
 tokio = { version = "1.44.2", features = ["rt-multi-thread", "macros", "fs"] }
-vortex-array = { version = "0.32.0", features = ["test-harness"] }
-vortex-btrblocks = "0.32.0"
-vortex-buffer =  "0.32.0"
-vortex-dtype = "0.32.0"
-vortex-error = "0.32.0"
-vortex-expr = "0.32.0"
-vortex-file = "0.32.0"
-vortex-io = { version = "0.32.0", features = ["tokio"] }
-vortex-mask = "0.32.0"
+vortex-array = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158", features = ["test-harness"] }
+vortex-btrblocks = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
+vortex-buffer =  { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
+vortex-dtype = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
+vortex-error = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
+vortex-expr = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
+vortex-file = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
+vortex-io = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158", features = ["tokio"] }
+vortex-mask = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
+vortex-scalar = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
+
+[dev-dependencies]
+itertools = "0.14.0"
+rstest = "0.25.0"

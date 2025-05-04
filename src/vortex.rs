@@ -6,59 +6,18 @@ use anyhow::anyhow;
 use futures_util::stream::StreamExt;
 use tokio::fs::OpenOptions;
 
-use vortex_array::arrays::{BooleanBufferBuilder, ConstantArray, StructArray};
+use vortex_array::arrays::StructArray;
 use vortex_array::builders::{ArrayBuilderExt, builder_with_capacity};
-use vortex_array::compute;
 use vortex_array::stream::ArrayStreamArrayExt;
 use vortex_array::validity::Validity;
 use vortex_array::{Array, ArrayRef, ToCanonical};
 use vortex_dtype::{DType, Nullability, PType};
-use vortex_error::{VortexResult, vortex_bail};
 use vortex_file::{VortexOpenOptions, VortexWriteOptions};
 use vortex_io::TokioFile;
-use vortex_mask::Mask;
+
+use crate::vortex_list_expr::ListContainsExpr;
 
 const ID_COLUMN: &str = "::id::";
-
-///
-/// Given a list of (primary) keys and a ListArray<Utf8> of tokens, returns the keys which contain
-/// the given token in their lists.
-///
-#[allow(dead_code)]
-fn key_having_token(key: &dyn Array, tokens: &dyn Array, token: &str) -> VortexResult<ArrayRef> {
-    if key.len() != tokens.len() {
-        vortex_bail!("Keys and tokens must have equal lengths.");
-    }
-
-    // TODO: `to_list` seems to be related to decoding, which we don't want to do.
-    let tokens = tokens.to_list()?;
-
-    // Find the matching token offsets.
-    let matching_tokens = compute::compare(
-        tokens.elements(),
-        &ConstantArray::new(token, tokens.elements().len()),
-        compute::Operator::Eq,
-    )?;
-
-    // For each matching token, determine the index of the associated offset.
-    let mut key_mask = BooleanBufferBuilder::new(key.len());
-    key_mask.resize(key.len());
-    for token_offset in matching_tokens.to_bool()?.boolean_buffer().set_indices() {
-        let search_result = compute::search_sorted_usize(
-            tokens.offsets(),
-            token_offset,
-            compute::SearchSortedSide::Left,
-        )?;
-        if let compute::SearchResult::Found(absolute_offset) = search_result {
-            key_mask.set_bit(absolute_offset, true);
-        }
-    }
-
-    // Filter out the matched keys.
-    let matching_keys = compute::filter(key, &Mask::from_buffer(key_mask.into()))?;
-
-    Ok(matching_keys)
-}
 
 ///
 /// Given a non-unique sample of tokens from a dataset, select `pivot_count` bucket values which
@@ -223,14 +182,10 @@ pub async fn vortex_search(path: &Path, query: &str) -> anyhow::Result<()> {
     let filter = crate::common::tokenize(query)
         .into_iter()
         .map(|token| {
-            let needle: Arc<str> = BucketType::Single.column_name(token).into();
-            let result = dtype
-                .names()
-                .binary_search(&needle);
+            let needle: Arc<str> = BucketType::Single.column_name(token.clone()).into();
+            let result = dtype.names().binary_search(&needle);
             let (idx, btype) = match result {
-                Ok(idx) => {
-                    (idx, BucketType::Single)
-                },
+                Ok(idx) => (idx, BucketType::Single),
                 Err(idx) if idx < 1 => {
                     // NB: Our ID_COLUMN is the first field, so an insertion position of `1`
                     // matches our first bucket.
@@ -242,7 +197,7 @@ pub async fn vortex_search(path: &Path, query: &str) -> anyhow::Result<()> {
             let get_item = vortex_expr::get_item(dtype.names()[idx].clone(), vortex_expr::ident());
             match btype {
                 BucketType::Single => get_item,
-                BucketType::Multi => todo!("Implement support for searching `multi` buckets."),
+                BucketType::Multi => ListContainsExpr::new_expr(get_item, token.into()),
             }
         })
         .reduce(vortex_expr::and)

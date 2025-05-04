@@ -1,6 +1,7 @@
 mod common;
 mod tantivy;
 mod vortex;
+mod vortex_list_expr;
 
 use std::path::PathBuf;
 
