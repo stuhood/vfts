@@ -1,5 +1,5 @@
 [package]
-name = "df-v-fts"
+name = "vfts"
 version = "0.1.0"
 edition = "2024"
 
@@ -9,17 +9,13 @@ clap = { version = "4.5.37", features = ["derive"] }
 futures-util = "0.3.31"
 tantivy = "0.24.1"
 tokio = { version = "1.44.2", features = ["rt-multi-thread", "macros", "fs"] }
-vortex-array = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158", features = ["test-harness"] }
-vortex-btrblocks = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
-vortex-buffer =  { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
-vortex-dtype = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
-vortex-error = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
-vortex-expr = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
-vortex-file = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
-vortex-io = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158", features = ["tokio"] }
-vortex-mask = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
-vortex-scalar = { git = "https://github.com/spiraldb/vortex/", rev = "73ea6d75bd1a3205f3d0f0cd05c4cda696110158" }
-
-[dev-dependencies]
-itertools = "0.14.0"
-rstest = "0.25.0"
+vortex-array = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
+vortex-btrblocks = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
+vortex-buffer =  { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
+vortex-dtype = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
+vortex-error = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
+vortex-expr = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
+vortex-file = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
+vortex-io = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists", features = ["tokio"] }
+vortex-mask = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
+vortex-scalar = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
