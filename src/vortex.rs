@@ -1,16 +1,15 @@
 use std::path::Path;
-use std::pin::pin;
 use std::sync::Arc;
 
 use anyhow::anyhow;
-use futures_util::stream::StreamExt;
+use futures_util::future;
 use tokio::fs::OpenOptions;
 
 use vortex_array::arrays::StructArray;
 use vortex_array::builders::{ArrayBuilderExt, builder_with_capacity};
 use vortex_array::stream::ArrayStreamArrayExt;
 use vortex_array::validity::Validity;
-use vortex_array::{Array, ArrayRef, ToCanonical};
+use vortex_array::{Array, ArrayRef};
 use vortex_dtype::{DType, Nullability, PType};
 use vortex_file::{VortexOpenOptions, VortexWriteOptions};
 use vortex_io::TokioFile;
@@ -203,18 +202,17 @@ pub async fn vortex_search(path: &Path, query: &str) -> anyhow::Result<()> {
         .reduce(vortex_expr::and)
         .ok_or_else(|| anyhow!("No tokens provided!"))?;
 
-    let mut results = pin!(
+    let counts = future::try_join_all(
         file.scan()?
             .with_filter(filter)
             .with_projection(vortex_expr::get_item(ID_COLUMN, vortex_expr::ident()))
-            .into_stream()?
-    );
+            .map(|array| Ok(array.len()))
+            .build()?,
+    )
+    .await?;
 
-    while let Some(row) = results.next().await {
-        for id in row?.to_primitive()?.as_slice::<u64>() {
-            println!(">>> {id:?}");
-        }
-    }
+    let count = counts.into_iter().map(|c| c.unwrap_or(0)).sum::<usize>();
+    println!(">>> {count}");
 
     Ok(())
 }
