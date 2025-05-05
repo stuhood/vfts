@@ -45,7 +45,8 @@ pub fn tantivy_index(path: &Path) -> tantivy::Result<()> {
 }
 
 pub fn tantivy_search(path: &Path, query: &str) -> tantivy::Result<()> {
-    let index = Index::open_in_dir(path)?;
+    let mut index = Index::open_in_dir(path)?;
+    index.set_default_multithread_executor()?;
     index
         .tokenizers()
         .register("simple", SimpleTokenizer::default());

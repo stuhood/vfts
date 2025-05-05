@@ -4,6 +4,7 @@ mod vortex;
 mod vortex_list_expr;
 
 use std::path::PathBuf;
+use std::time::Instant;
 
 use clap::{Parser, Subcommand};
 
@@ -37,6 +38,7 @@ enum Search {
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
+    let start = Instant::now();
     match cli.command {
         Command::Index(Index::Tantivy { path }) => crate::tantivy::tantivy_index(&path)?,
         Command::Index(Index::Vortex { path, buckets }) => {
@@ -49,6 +51,7 @@ async fn main() -> anyhow::Result<()> {
             crate::vortex::vortex_search(&path, &query).await?
         }
     }
+    println!(">>> elapsed: {:?}", start.elapsed());
 
     Ok(())
 }
