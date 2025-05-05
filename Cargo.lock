@@ -2879,7 +2879,7 @@ dependencies = [
 [[package]]
 name = "vortex-alp"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "itertools",
  "num-traits",
@@ -2897,7 +2897,7 @@ dependencies = [
 [[package]]
 name = "vortex-array"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrow-arith",
  "arrow-array",
@@ -2938,7 +2938,7 @@ dependencies = [
 [[package]]
 name = "vortex-btrblocks"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrow-buffer",
  "getrandom 0.2.16",
@@ -2966,7 +2966,7 @@ dependencies = [
 [[package]]
 name = "vortex-buffer"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrow-buffer",
  "bytes",
@@ -2977,7 +2977,7 @@ dependencies = [
 [[package]]
 name = "vortex-bytebool"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrow-buffer",
  "num-traits",
@@ -2992,7 +2992,7 @@ dependencies = [
 [[package]]
 name = "vortex-datetime-parts"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "getrandom 0.2.16",
  "prost",
@@ -3007,7 +3007,7 @@ dependencies = [
 [[package]]
 name = "vortex-dict"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrow-buffer",
  "num-traits",
@@ -3024,7 +3024,7 @@ dependencies = [
 [[package]]
 name = "vortex-dtype"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrow-schema",
  "flatbuffers",
@@ -3044,7 +3044,7 @@ dependencies = [
 [[package]]
 name = "vortex-error"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrow-schema",
  "flatbuffers",
@@ -3059,7 +3059,7 @@ dependencies = [
 [[package]]
 name = "vortex-expr"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "dyn-hash",
  "itertools",
@@ -3074,7 +3074,7 @@ dependencies = [
 [[package]]
 name = "vortex-fastlanes"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrayref",
  "arrow-buffer",
@@ -3094,7 +3094,7 @@ dependencies = [
 [[package]]
 name = "vortex-file"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3133,7 +3133,7 @@ dependencies = [
 [[package]]
 name = "vortex-flatbuffers"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "flatbuffers",
  "vortex-buffer",
@@ -3142,7 +3142,7 @@ dependencies = [
 [[package]]
 name = "vortex-fsst"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "fsst-rs",
  "prost",
@@ -3157,7 +3157,7 @@ dependencies = [
 [[package]]
 name = "vortex-io"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "bytes",
  "cfg-if",
@@ -3176,7 +3176,7 @@ dependencies = [
 [[package]]
 name = "vortex-layout"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrow-array",
  "arrow-buffer",
@@ -3209,7 +3209,7 @@ dependencies = [
 [[package]]
 name = "vortex-mask"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrow-buffer",
  "itertools",
@@ -3219,7 +3219,7 @@ dependencies = [
 [[package]]
 name = "vortex-metrics"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "getrandom 0.3.2",
  "vortex-error",
@@ -3229,7 +3229,7 @@ dependencies = [
 [[package]]
 name = "vortex-proto"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "prost",
  "prost-types",
@@ -3238,7 +3238,7 @@ dependencies = [
 [[package]]
 name = "vortex-runend"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrow-buffer",
  "itertools",
@@ -3255,7 +3255,7 @@ dependencies = [
 [[package]]
 name = "vortex-scalar"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "arrow-array",
  "arrow-buffer",
@@ -3274,7 +3274,7 @@ dependencies = [
 [[package]]
 name = "vortex-sparse"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "itertools",
  "prost",
@@ -3290,7 +3290,7 @@ dependencies = [
 [[package]]
 name = "vortex-zigzag"
 version = "0.32.0"
-source = "git+https://github.com/stuhood/vortex/?branch=stuhood.list-contains-all-elements-but-has-empty-lists#5ec71c7dd21301a12d7fa5e1ed189a6d00a3e662"
+source = "git+https://github.com/spiraldb/vortex/?rev=f723412984209b8173578e5e8228e4b48ea9e300#f723412984209b8173578e5e8228e4b48ea9e300"
 dependencies = [
  "vortex-array",
  "vortex-buffer",

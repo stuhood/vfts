@@ -9,13 +9,13 @@ clap = { version = "4.5.37", features = ["derive"] }
 futures-util = "0.3.31"
 tantivy = "0.24.1"
 tokio = { version = "1.44.2", features = ["rt-multi-thread", "macros", "fs"] }
-vortex-array = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
-vortex-btrblocks = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
-vortex-buffer =  { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
-vortex-dtype = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
-vortex-error = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
-vortex-expr = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
-vortex-file = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
-vortex-io = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists", features = ["tokio"] }
-vortex-mask = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
-vortex-scalar = { git = "https://github.com/stuhood/vortex/", branch = "stuhood.list-contains-all-elements-but-has-empty-lists" }
+vortex-array = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
+vortex-btrblocks = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
+vortex-buffer =  { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
+vortex-dtype = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
+vortex-error = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
+vortex-expr = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
+vortex-file = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
+vortex-io = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300", features = ["tokio"] }
+vortex-mask = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
+vortex-scalar = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
