@@ -1,10 +1,10 @@
 use std::path::Path;
 
 use tantivy::collector::Count;
-use tantivy::query::QueryParser;
+use tantivy::query::{BooleanQuery, Query, QueryParser, TermQuery};
 use tantivy::schema::*;
 use tantivy::tokenizer::SimpleTokenizer;
-use tantivy::{Index, IndexWriter};
+use tantivy::{Index, IndexWriter, Searcher};
 
 fn schema() -> Schema {
     let mut schema_builder = Schema::builder();
@@ -45,6 +45,41 @@ pub fn tantivy_index(path: &Path) -> tantivy::Result<()> {
 }
 
 pub fn tantivy_search(path: &Path, query: &str) -> tantivy::Result<()> {
+    let (searcher, index, body_field) = searcher(path)?;
+    let query_parser = QueryParser::for_index(&index, vec![body_field]);
+    let query = query_parser.parse_query(query)?;
+
+    let count = searcher.search(&query, &Count)?;
+
+    println!(">>> {count}");
+    Ok(())
+}
+
+pub fn tantivy_search_many(path: &Path) -> tantivy::Result<()> {
+    let (searcher, _, body_field) = searcher(path)?;
+
+    let mut queries = 0;
+    let mut matches = 0;
+    for (_, doc) in crate::common::documents() {
+        let query = BooleanQuery::intersection(
+            doc.into_iter()
+                .map(|term| -> Box<dyn Query> {
+                    Box::new(TermQuery::new(
+                        Term::from_field_text(body_field, &term),
+                        IndexRecordOption::Basic,
+                    ))
+                })
+                .collect(),
+        );
+        queries += 1;
+        matches += searcher.search(&query, &Count)?;
+    }
+
+    println!(">>> {queries} queries matched {matches} docs");
+    Ok(())
+}
+
+fn searcher(path: &Path) -> tantivy::Result<(Searcher, Index, Field)> {
     let mut index = Index::open_in_dir(path)?;
     index.set_default_multithread_executor()?;
     index
@@ -55,11 +90,5 @@ pub fn tantivy_search(path: &Path, query: &str) -> tantivy::Result<()> {
     let searcher = reader.searcher();
 
     let body_field = schema().get_field("body").unwrap();
-    let query_parser = QueryParser::for_index(&index, vec![body_field]);
-    let query = query_parser.parse_query(query)?;
-
-    let count = searcher.search(&query, &Count)?;
-
-    println!(">>> {count}");
-    Ok(())
+    Ok((searcher, index, body_field))
 }

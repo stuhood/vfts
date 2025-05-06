@@ -9,13 +9,13 @@ clap = { version = "4.5.37", features = ["derive"] }
 futures-util = "0.3.31"
 tantivy = "0.24.1"
 tokio = { version = "1.44.2", features = ["rt-multi-thread", "macros", "fs"] }
-vortex-array = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
-vortex-btrblocks = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
-vortex-buffer =  { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
-vortex-dtype = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
-vortex-error = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
-vortex-expr = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
-vortex-file = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
-vortex-io = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300", features = ["tokio"] }
-vortex-mask = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
-vortex-scalar = { git = "https://github.com/spiraldb/vortex/", rev = "f723412984209b8173578e5e8228e4b48ea9e300" }
+vortex-array = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
+vortex-btrblocks = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
+vortex-buffer =  { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
+vortex-dtype = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
+vortex-error = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
+vortex-expr = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
+vortex-file = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
+vortex-io = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d", features = ["tokio"] }
+vortex-mask = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
+vortex-scalar = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }

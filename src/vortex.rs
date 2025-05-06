@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -10,8 +11,9 @@ use vortex_array::builders::{ArrayBuilderExt, builder_with_capacity};
 use vortex_array::stream::ArrayStreamArrayExt;
 use vortex_array::validity::Validity;
 use vortex_array::{Array, ArrayRef};
-use vortex_dtype::{DType, Nullability, PType};
-use vortex_file::{VortexOpenOptions, VortexWriteOptions};
+use vortex_dtype::{DType, Nullability, PType, StructDType};
+use vortex_expr::ExprRef;
+use vortex_file::{VortexFile, VortexOpenOptions, VortexWriteOptions};
 use vortex_io::TokioFile;
 
 use crate::vortex_list_expr::ListContainsExpr;
@@ -168,17 +170,57 @@ async fn vortex_index_array(path: &Path, array: ArrayRef) -> anyhow::Result<()> 
 }
 
 pub async fn vortex_search(path: &Path, query: &str) -> anyhow::Result<()> {
-    let file = VortexOpenOptions::file()
-        .open_read_at(TokioFile::open(path)?)
+    let (file, dtype) = vortex_file(path).await?;
+
+    let filter = create_filter(&dtype, crate::common::tokenize(query));
+
+    let counts = future::try_join_all(
+        file.scan()?
+            .with_filter(filter)
+            .with_projection(vortex_expr::get_item(ID_COLUMN, vortex_expr::ident()))
+            .map(|array| Ok(array.len()))
+            .build()?,
+    )
+    .await?;
+
+    let count = counts.into_iter().map(|c| c.unwrap_or(0)).sum::<usize>();
+    println!(">>> {count}");
+
+    Ok(())
+}
+
+pub async fn vortex_search_many(path: &Path) -> anyhow::Result<()> {
+    let (file, dtype) = vortex_file(path).await?;
+
+    let mut queries = 0;
+    let mut matches = 0;
+    for (_, doc) in crate::common::documents() {
+        let filter = create_filter(&dtype, doc);
+
+        let counts = future::try_join_all(
+            file.scan()?
+                .with_filter(filter)
+                .with_projection(vortex_expr::get_item(ID_COLUMN, vortex_expr::ident()))
+                .map(|array| Ok(array.len()))
+                .build()?,
+        )
         .await?;
+        queries += 1;
+        matches += counts.into_iter().map(|c| c.unwrap_or(0)).sum::<usize>();
+    }
 
-    let dtype = file
-        .dtype()
-        .as_struct()
-        .ok_or_else(|| anyhow!("Does not appear to be an index!"))?;
+    println!(">>> {queries} queries matched {matches} docs");
+    Ok(())
+}
 
-    // Binary search on field names to find the bins that we'll be scanning in.
-    let filter = crate::common::tokenize(query)
+///
+/// Binary search on field names to find the bins that we'll be scanning in, and create a filter.
+///
+fn create_filter(
+    dtype: &Arc<StructDType>,
+    tokens: HashSet<String>,
+) -> ExprRef {
+    tokens
         .into_iter()
         .map(|token| {
             let needle: Arc<str> = BucketType::Single.column_name(token.clone()).into();
@@ -200,19 +242,19 @@ pub async fn vortex_search(path: &Path, query: &str) -> anyhow::Result<()> {
             }
         })
         .reduce(vortex_expr::and)
-        .ok_or_else(|| anyhow!("No tokens provided!"))?;
+        .unwrap_or_else(|| vortex_expr::lit(false))
+}
 
-    let counts = future::try_join_all(
-        file.scan()?
-            .with_filter(filter)
-            .with_projection(vortex_expr::get_item(ID_COLUMN, vortex_expr::ident()))
-            .map(|array| Ok(array.len()))
-            .build()?,
-    )
-    .await?;
+async fn vortex_file(path: &Path) -> anyhow::Result<(VortexFile, Arc<StructDType>)> {
+    let file = VortexOpenOptions::file()
+        .open_read_at(TokioFile::open(path)?)
+        .await?;
 
-    let count = counts.into_iter().map(|c| c.unwrap_or(0)).sum::<usize>();
-    println!(">>> {count}");
+    let dtype = file
+        .dtype()
+        .as_struct()
+        .ok_or_else(|| anyhow!("Does not appear to be an index!"))?
+        .clone();
 
-    Ok(())
+    Ok((file, dtype))
 }

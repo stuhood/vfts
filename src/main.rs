@@ -20,6 +20,8 @@ enum Command {
     Index(Index),
     #[command(subcommand)]
     Search(Search),
+    #[command(subcommand)]
+    SearchMany(SearchMany),
 }
 
 #[derive(Debug, Subcommand)]
@@ -32,6 +34,12 @@ enum Index {
 enum Search {
     Tantivy { path: PathBuf, query: String },
     Vortex { path: PathBuf, query: String },
+}
+
+#[derive(Debug, Subcommand)]
+enum SearchMany {
+    Tantivy { path: PathBuf },
+    Vortex { path: PathBuf },
 }
 
 #[tokio::main]
@@ -49,6 +57,12 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::Search(Search::Vortex { path, query }) => {
             crate::vortex::vortex_search(&path, &query).await?
+        }
+        Command::SearchMany(SearchMany::Tantivy { path }) => {
+            crate::tantivy::tantivy_search_many(&path)?
+        }
+        Command::SearchMany(SearchMany::Vortex { path }) => {
+            crate::vortex::vortex_search_many(&path).await?
         }
     }
     println!(">>> elapsed: {:?}", start.elapsed());
