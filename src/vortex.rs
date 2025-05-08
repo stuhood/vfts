@@ -177,7 +177,7 @@ pub async fn vortex_search(path: &Path, query: &str) -> anyhow::Result<()> {
     let counts = future::try_join_all(
         file.scan()?
             .with_filter(filter)
-            .with_projection(vortex_expr::get_item(ID_COLUMN, vortex_expr::ident()))
+            .with_projection(vortex_expr::lit(true))
             .map(|array| Ok(array.len()))
             .build()?,
     )
@@ -200,7 +200,7 @@ pub async fn vortex_search_many(path: &Path) -> anyhow::Result<()> {
         let counts = future::try_join_all(
             file.scan()?
                 .with_filter(filter)
-                .with_projection(vortex_expr::get_item(ID_COLUMN, vortex_expr::ident()))
+                .with_projection(vortex_expr::lit(true))
                 .map(|array| Ok(array.len()))
                 .build()?,
         )
