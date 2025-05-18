@@ -5,12 +5,12 @@ use std::sync::Arc;
 use anyhow::anyhow;
 use futures_util::future;
 use tokio::fs::OpenOptions;
+use tokio::runtime::Handle;
 
 use vortex_array::arrays::StructArray;
 use vortex_array::builders::{ArrayBuilderExt, builder_with_capacity};
-use vortex_array::stream::ArrayStreamArrayExt;
 use vortex_array::validity::Validity;
-use vortex_array::{Array, ArrayRef};
+use vortex_array::{Array, ArrayRef, IntoArray};
 use vortex_dtype::{DType, Nullability, PType, StructDType};
 use vortex_expr::ExprRef;
 use vortex_file::{VortexFile, VortexOpenOptions, VortexWriteOptions};
@@ -201,6 +201,7 @@ pub async fn vortex_search_many(path: &Path) -> anyhow::Result<()> {
             file.scan()?
                 .with_filter(filter)
                 .with_projection(vortex_expr::lit(true))
+                .with_tokio_executor(Handle::current())
                 .map(|array| Ok(array.len()))
                 .build()?,
         )
@@ -216,10 +217,7 @@ pub async fn vortex_search_many(path: &Path) -> anyhow::Result<()> {
 ///
 /// Binary search on field names to find the bins that we'll be scanning in, and create a filter.
 ///
-fn create_filter(
-    dtype: &Arc<StructDType>,
-    tokens: HashSet<String>,
-) -> ExprRef {
+fn create_filter(dtype: &Arc<StructDType>, tokens: HashSet<String>) -> ExprRef {
     tokens
         .into_iter()
         .map(|token| {

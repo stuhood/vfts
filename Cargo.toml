@@ -9,13 +9,13 @@ clap = { version = "4.5.37", features = ["derive"] }
 futures-util = "0.3.31"
 tantivy = "0.24.1"
 tokio = { version = "1.44.2", features = ["rt-multi-thread", "macros", "fs"] }
-vortex-array = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
-vortex-btrblocks = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
-vortex-buffer =  { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
-vortex-dtype = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
-vortex-error = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
-vortex-expr = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
-vortex-file = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
-vortex-io = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d", features = ["tokio"] }
-vortex-mask = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
-vortex-scalar = { git = "https://github.com/spiraldb/vortex/", rev = "526fb1f3618edf2b00c119398f4bb1e049791a5d" }
+vortex-array = { path = "/Users/stuhood/src/vortex/vortex-array" }
+vortex-btrblocks = { path = "/Users/stuhood/src/vortex/vortex-btrblocks" }
+vortex-buffer =  { path = "/Users/stuhood/src/vortex/vortex-buffer" }
+vortex-dtype = { path = "/Users/stuhood/src/vortex/vortex-dtype" }
+vortex-error = { path = "/Users/stuhood/src/vortex/vortex-error" }
+vortex-expr = { path = "/Users/stuhood/src/vortex/vortex-expr" }
+vortex-file = { path = "/Users/stuhood/src/vortex/vortex-file", features = ["tokio"] }
+vortex-io = { path = "/Users/stuhood/src/vortex/vortex-io", features = ["tokio"] }
+vortex-mask = { path = "/Users/stuhood/src/vortex/vortex-mask" }
+vortex-scalar = { path = "/Users/stuhood/src/vortex/vortex-scalar" }
