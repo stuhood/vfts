@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.98"
+async-stream = "0.3.6"
 clap = { version = "4.5.37", features = ["derive"] }
 futures-util = "0.3.31"
 tantivy = "0.24.1"

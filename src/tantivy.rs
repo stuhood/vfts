@@ -20,7 +20,7 @@ fn schema() -> Schema {
     schema_builder.build()
 }
 
-pub fn tantivy_index(path: &Path) -> tantivy::Result<()> {
+pub fn tantivy_index(path: &Path, doc_count: usize) -> tantivy::Result<()> {
     let schema = schema();
     let index = Index::create_in_dir(path, schema.clone())?;
     index
@@ -30,7 +30,7 @@ pub fn tantivy_index(path: &Path) -> tantivy::Result<()> {
 
     let id_field = schema.get_field("id").unwrap();
     let body_field = schema.get_field("body").unwrap();
-    for (id, document) in crate::common::documents() {
+    for (id, document) in crate::common::documents(doc_count) {
         let mut doc = TantivyDocument::default();
         doc.add_u64(id_field, id);
         doc.add_text(
@@ -55,12 +55,11 @@ pub fn tantivy_search(path: &Path, query: &str) -> tantivy::Result<()> {
     Ok(())
 }
 
-pub fn tantivy_search_many(path: &Path) -> tantivy::Result<()> {
+pub fn tantivy_search_many(path: &Path, queries: usize) -> tantivy::Result<()> {
     let (searcher, _, body_field) = searcher(path)?;
 
-    let mut queries = 0;
     let mut matches = 0;
-    for (_, doc) in crate::common::documents() {
+    for (_, doc) in crate::common::documents(queries) {
         let query = BooleanQuery::intersection(
             doc.into_iter()
                 .map(|term| -> Box<dyn Query> {
@@ -71,7 +70,6 @@ pub fn tantivy_search_many(path: &Path) -> tantivy::Result<()> {
                 })
                 .collect(),
         );
-        queries += 1;
         matches += searcher.search(&query, &Count)?;
     }
 

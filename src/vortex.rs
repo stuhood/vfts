@@ -3,14 +3,16 @@ use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::anyhow;
-use futures_util::future;
+use async_stream::stream;
+use futures_util::{StreamExt, future};
 use tokio::fs::OpenOptions;
 use tokio::runtime::Handle;
 
 use vortex_array::arrays::StructArray;
 use vortex_array::builders::{ArrayBuilderExt, builder_with_capacity};
+use vortex_array::stream::{ArrayStream, ArrayStreamAdapter};
 use vortex_array::validity::Validity;
-use vortex_array::{Array, ArrayRef, IntoArray};
+use vortex_array::{Array, IntoArray};
 use vortex_dtype::{DType, Nullability, PType, StructDType};
 use vortex_expr::ExprRef;
 use vortex_file::{VortexFile, VortexOpenOptions, VortexWriteOptions};
@@ -19,6 +21,8 @@ use vortex_io::TokioFile;
 use crate::vortex_list_expr::ListContainsExpr;
 
 const ID_COLUMN: &str = "::id::";
+
+const CHUNK_SIZE: usize = 8192;
 
 ///
 /// Given a non-unique sample of tokens from a dataset, select `pivot_count` bucket values which
@@ -66,95 +70,119 @@ enum BucketType {
 }
 
 impl BucketType {
-    fn column_name(&self, mut token: String) -> String {
-        token.push(':');
-        token.push_str(&((*self) as u8).to_string());
-        token
+    fn column_name(&self, token: &str) -> String {
+        format!("{token}:{}", (*self) as u8)
     }
 }
 
-pub async fn vortex_index(path: &Path, buckets: u16) -> anyhow::Result<()> {
+pub async fn vortex_index(path: &Path, doc_count: usize, buckets: u16) -> anyhow::Result<()> {
+    let document_stream = document_array_stream(doc_count, buckets).await?;
+    vortex_index_array(path, document_stream).await?;
+    println!(">>> created {path:?}, with up to {buckets} buckets");
+    Ok(())
+}
+
+async fn document_array_stream(
+    doc_count: usize,
+    buckets: u16,
+) -> anyhow::Result<impl ArrayStream + Unpin> {
     let buckets = select_buckets_from(
-        crate::common::documents()
-            .take(1000)
+        crate::common::documents(1000)
             .map(|(_, doc)| doc.into_iter())
             .flatten()
             .collect(),
         buckets,
     );
-    let bucket_count = buckets.len();
 
-    let mut id_builder = builder_with_capacity(
-        &DType::Primitive(PType::U64, Nullability::NonNullable).into(),
-        1024,
+    // Construct the `DType` for the `StructArray` that we will be emitting.
+    // There is one prefixed `ID_COLUMN`, followed by one column per bucket. The Vortex DType of
+    // each bucket is decided by its `BucketType`.
+    let column_dtypes: Vec<DType> =
+        std::iter::once(DType::Primitive(PType::U64, Nullability::NonNullable).into())
+            .chain(buckets.iter().map(|(_, btype)| {
+                match btype {
+                    BucketType::Single => DType::Bool(Nullability::NonNullable).into(),
+                    BucketType::Multi => DType::List(
+                        DType::Utf8(Nullability::NonNullable).into(),
+                        Nullability::NonNullable,
+                    )
+                    .into(),
+                }
+            }))
+            .collect();
+    let struct_dtype = StructDType::new(
+        std::iter::once(ID_COLUMN.into())
+            .chain(buckets.iter().map(|(t, btype)| btype.column_name(t).into()))
+            .collect(),
+        column_dtypes.clone(),
     );
-    let mut builders = buckets
-        .iter()
-        .map(|(_, btype)| match btype {
-            BucketType::Single => {
-                builder_with_capacity(&DType::Bool(Nullability::NonNullable).into(), 1024)
-            }
-            BucketType::Multi => builder_with_capacity(
-                &DType::List(
-                    DType::Utf8(Nullability::NonNullable).into(),
-                    Nullability::NonNullable,
-                )
-                .into(),
-                1024,
-            ),
-        })
-        .collect::<Vec<_>>();
-    let mut entries_to_append: Vec<Vec<String>> = buckets.iter().map(|_| Vec::new()).collect();
-    let mut doc_count = 0;
-    for (id, document) in crate::common::documents() {
-        id_builder.append_scalar(&id.into())?;
-        // Group the tokens by the bucket that they will be appended to.
-        for token in document {
-            let idx = match buckets
-                .binary_search_by_key(&(&token, &BucketType::Single), |(token, btype)| {
-                    (token, btype)
-                }) {
-                Ok(idx) => idx,
-                Err(idx) if idx == 0 => 0,
-                Err(idx) => idx - 1,
-            };
-            entries_to_append[idx].push(token);
-        }
-        // Drain all buckets into the builders. Many of them will be empty, and that is ok.
-        for (idx, entries) in entries_to_append.iter_mut().enumerate() {
-            match buckets[idx].1 {
-                BucketType::Single => {
-                    let set = !entries.is_empty();
-                    builders[idx].append_scalar(&set.into())?;
-                    entries.clear();
+    let dtype = DType::Struct(struct_dtype.clone().into(), Nullability::NonNullable);
+
+    // Create a stream that emits batches of documents as StructArrays.
+    let stream = stream! {
+        let mut entries_to_append: Vec<Vec<String>> = buckets.iter().map(|_| Vec::new()).collect();
+        let mut documents = crate::common::documents(doc_count);
+        let mut might_have_more_docs = true;
+        while might_have_more_docs {
+            let mut builders = column_dtypes
+                .iter()
+                .map(|dtype| builder_with_capacity(dtype.into(), 1024))
+                .collect::<Vec<_>>();
+            let mut doc_count = 0;
+            while doc_count < CHUNK_SIZE {
+                let Some((id, document)) = documents.next() else {
+                    // There are no more documents. Finish flushing the current chunk, and then
+                    // complete the stream.
+                    might_have_more_docs = false;
+                    break;
+                };
+                builders[0].append_scalar(&id.into())?;
+                // Group the tokens by the bucket that they will be appended to.
+                for token in document {
+                    let idx = match buckets
+                        .binary_search_by_key(&(&token, &BucketType::Single), |(token, btype)| {
+                            (token, btype)
+                        }) {
+                        Ok(idx) => idx,
+                        Err(idx) if idx == 0 => 0,
+                        Err(idx) => idx - 1,
+                    };
+                    entries_to_append[idx].push(token);
                 }
-                BucketType::Multi => {
-                    builders[idx].append_scalar(&entries.drain(..).collect::<Vec<_>>().into())?
+                // Drain all buckets into the builders. Many of them will be empty, and that is ok.
+                for (idx, entries) in entries_to_append.iter_mut().enumerate() {
+                    match buckets[idx].1 {
+                        BucketType::Single => {
+                            let set = !entries.is_empty();
+                            builders[idx + 1].append_scalar(&set.into())?;
+                            entries.clear();
+                        }
+                        BucketType::Multi => builders[idx + 1]
+                            .append_scalar(&entries.drain(..).collect::<Vec<_>>().into())?,
+                    }
                 }
+                doc_count += 1;
             }
+
+            let fields = builders.into_iter().map(|mut b| b.finish()).collect();
+
+            yield Ok(StructArray::try_new_with_dtype(
+                fields,
+                struct_dtype.clone().into(),
+                doc_count,
+                Validity::NonNullable,
+            )?
+            .into_array());
         }
-        doc_count += 1;
-    }
+    };
 
-    let field_names: Arc<[Arc<str>]> = std::iter::once(ID_COLUMN.into())
-        .chain(
-            buckets
-                .into_iter()
-                .map(|(t, btype)| btype.column_name(t).into()),
-        )
-        .collect();
-    let fields = std::iter::once(id_builder.finish())
-        .chain(builders.into_iter().map(|mut b| b.finish()))
-        .collect();
-
-    let st = StructArray::try_new(field_names, fields, doc_count, Validity::NonNullable)?;
-
-    vortex_index_array(path, st.into_array()).await?;
-    println!(">>> created {path:?}, with {doc_count} documents in {bucket_count} buckets");
-    Ok(())
+    Ok(ArrayStreamAdapter::new(dtype, stream.boxed()))
 }
 
-async fn vortex_index_array(path: &Path, array: ArrayRef) -> anyhow::Result<()> {
+async fn vortex_index_array(
+    path: &Path,
+    array_stream: impl ArrayStream + Unpin,
+) -> anyhow::Result<()> {
     let f = OpenOptions::new()
         .write(true)
         .truncate(true)
@@ -162,9 +190,7 @@ async fn vortex_index_array(path: &Path, array: ArrayRef) -> anyhow::Result<()> 
         .open(&path)
         .await?;
 
-    VortexWriteOptions::default()
-        .write(f, array.to_array_stream())
-        .await?;
+    VortexWriteOptions::default().write(f, array_stream).await?;
 
     Ok(())
 }
@@ -189,12 +215,11 @@ pub async fn vortex_search(path: &Path, query: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn vortex_search_many(path: &Path) -> anyhow::Result<()> {
+pub async fn vortex_search_many(path: &Path, queries: usize) -> anyhow::Result<()> {
     let (file, dtype) = vortex_file(path).await?;
 
-    let mut queries = 0;
     let mut matches = 0;
-    for (_, doc) in crate::common::documents() {
+    for (_, doc) in crate::common::documents(queries) {
         let filter = create_filter(&dtype, doc);
 
         let counts = future::try_join_all(
@@ -206,7 +231,6 @@ pub async fn vortex_search_many(path: &Path) -> anyhow::Result<()> {
                 .build()?,
         )
         .await?;
-        queries += 1;
         matches += counts.into_iter().map(|c| c.unwrap_or(0)).sum::<usize>();
     }
 
@@ -221,7 +245,7 @@ fn create_filter(dtype: &Arc<StructDType>, tokens: HashSet<String>) -> ExprRef {
     tokens
         .into_iter()
         .map(|token| {
-            let needle: Arc<str> = BucketType::Single.column_name(token.clone()).into();
+            let needle: Arc<str> = BucketType::Single.column_name(&token).into();
             let result = dtype.names().binary_search(&needle);
             let (idx, btype) = match result {
                 Ok(idx) => (idx, BucketType::Single),

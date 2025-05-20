@@ -26,8 +26,15 @@ enum Command {
 
 #[derive(Debug, Subcommand)]
 enum Index {
-    Tantivy { path: PathBuf },
-    Vortex { path: PathBuf, buckets: u16 },
+    Tantivy {
+        path: PathBuf,
+        documents: usize,
+    },
+    Vortex {
+        path: PathBuf,
+        documents: usize,
+        buckets: u16,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -38,8 +45,8 @@ enum Search {
 
 #[derive(Debug, Subcommand)]
 enum SearchMany {
-    Tantivy { path: PathBuf },
-    Vortex { path: PathBuf },
+    Tantivy { path: PathBuf, queries: usize },
+    Vortex { path: PathBuf, queries: usize },
 }
 
 #[tokio::main]
@@ -48,21 +55,25 @@ async fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     match cli.command {
-        Command::Index(Index::Tantivy { path }) => crate::tantivy::tantivy_index(&path)?,
-        Command::Index(Index::Vortex { path, buckets }) => {
-            crate::vortex::vortex_index(&path, buckets).await?
+        Command::Index(Index::Tantivy { path, documents }) => {
+            crate::tantivy::tantivy_index(&path, documents)?
         }
+        Command::Index(Index::Vortex {
+            path,
+            documents,
+            buckets,
+        }) => crate::vortex::vortex_index(&path, documents, buckets).await?,
         Command::Search(Search::Tantivy { path, query }) => {
             crate::tantivy::tantivy_search(&path, &query)?
         }
         Command::Search(Search::Vortex { path, query }) => {
             crate::vortex::vortex_search(&path, &query).await?
         }
-        Command::SearchMany(SearchMany::Tantivy { path }) => {
-            crate::tantivy::tantivy_search_many(&path)?
+        Command::SearchMany(SearchMany::Tantivy { path, queries }) => {
+            crate::tantivy::tantivy_search_many(&path, queries)?
         }
-        Command::SearchMany(SearchMany::Vortex { path }) => {
-            crate::vortex::vortex_search_many(&path).await?
+        Command::SearchMany(SearchMany::Vortex { path, queries }) => {
+            crate::vortex::vortex_search_many(&path, queries).await?
         }
     }
     println!(">>> elapsed: {:?}", start.elapsed());

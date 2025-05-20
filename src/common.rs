@@ -11,9 +11,11 @@ pub fn tokenize(document: &str) -> HashSet<String> {
         .collect()
 }
 
-pub fn documents() -> impl Iterator<Item = Document> {
+pub fn documents(doc_count: usize) -> impl Iterator<Item = Document> {
     include_str!("./all_the_henries.txt")
         .lines()
+        .cycle()
+        .take(doc_count)
         .map(tokenize)
         .enumerate()
         .map(|(id, document)| (id.try_into().unwrap(), document))
