@@ -15,7 +15,7 @@ use vortex_array::validity::Validity;
 use vortex_array::{Array, IntoArray};
 use vortex_dtype::{DType, Nullability, PType, StructDType};
 use vortex_expr::ExprRef;
-use vortex_file::{VortexFile, VortexOpenOptions, VortexWriteOptions};
+use vortex_file::{VortexFile, VortexOpenOptions, VortexWriteOptions, scan::ScanBuilder};
 use vortex_io::TokioFile;
 
 use crate::vortex_list_expr::ListContainsExpr;
@@ -217,13 +217,14 @@ pub async fn vortex_search(path: &Path, query: &str) -> anyhow::Result<()> {
 
 pub async fn vortex_search_many(path: &Path, queries: usize) -> anyhow::Result<()> {
     let (file, dtype) = vortex_file(path).await?;
+    let layout_reader = file.layout_reader()?;
 
     let mut matches = 0;
     for (_, doc) in crate::common::documents(queries) {
         let filter = create_filter(&dtype, doc);
 
         let counts = future::try_join_all(
-            file.scan()?
+            ScanBuilder::new(layout_reader.clone())
                 .with_filter(filter)
                 .with_projection(vortex_expr::lit(true))
                 .with_tokio_executor(Handle::current())
